@@ -64,7 +64,7 @@ namespace WebUpload.Controllers
         }
 
         [HttpPost]
-        public object Upload()
+        public async Task<object> Upload()
         {
 
            try
@@ -92,11 +92,11 @@ namespace WebUpload.Controllers
                     var bytes = new byte[length];
                     using (var stream = file.OpenReadStream())
                     {
-                        stream.Read(bytes);
+                        await stream.ReadAsync(bytes);
                     }
                     CheckDirectory(filePath);
 
-                    System.IO.File.WriteAllBytes(filePath, bytes);
+                    await System.IO.File.WriteAllBytesAsync(filePath, bytes);
                 }
 
                 return new { success = true, file = Combine(Container, fileName) };

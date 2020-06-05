@@ -20,30 +20,53 @@ namespace UploadFile
         public static string WebPath = "/api/file/Upload";
         static Queue queue;
         static StringBuilder sb = new StringBuilder();
-        static int ThreadCount = 10;
-        static int ThreadRunCount = 200;
+        static int ThreadCount = 1;
+        static int ThreadRunCount = 40;
         static string logName = ".net";
         static void Main(string[] args)
         {
-            Console.WriteLine("请选择调用目标1:.net，其他:go");
-            var read = Console.ReadLine();
-            if(read!="1")
+            try
             {
-                WebSite = "http://localhost:8888";
-                WebPath = "/upload";
-                logName = "go";
-            }
-            queue = new Queue(ThreadCount);
-            
-            var path = Environment.CurrentDirectory + @"\Img\1.jpg";
-            sb = new StringBuilder();
+                Console.WriteLine("请选择调用目标1:.net，其他:go");
+                var read = Console.ReadLine();
+                if (read != "1")
+                {
+                    WebSite = "http://localhost:8888";
+                    WebPath = "/upload";
+                    logName = "go";
+                }
 
-            for (var n = 0; n < ThreadCount; n++)
-            {
-                Thread t = new Thread(new ParameterizedThreadStart(Bw_DoWork));
-                t.Start(path);
+                Console.WriteLine("请输入开启线程数量(默认为1):");
+                var count = Console.ReadLine();
+                if (!int.TryParse(count, out ThreadCount))
+                    ThreadCount = 1;
+
+                Console.WriteLine("请输入每个线程调用次数(默认为10):");
+                var runcount = Console.ReadLine();
+                if (!int.TryParse(runcount, out ThreadRunCount))
+                    ThreadRunCount = 10;
+
+                queue = new Queue(ThreadCount);
+
+                var path = Environment.CurrentDirectory + @"\Img\1.jpg";
+                sb = new StringBuilder();
+
+                for (var n = 0; n < ThreadCount; n++)
+                {
+                    Thread t = new Thread(new ParameterizedThreadStart(Bw_DoWork));
+                    t.Start(path);
+                }
+                //Bw_DoWork(path);
             }
-            //Bw_DoWork(path);
+            catch(Exception ex)
+            {
+                while(ex.InnerException!=null)
+                {
+                    ex = ex.InnerException;
+                }
+                sb.AppendLine(ex.ToString());
+                SaveLog();
+            }
         }
 
         private static void Bw_DoWork(object sender)
@@ -61,8 +84,12 @@ namespace UploadFile
             queue.Enqueue(1);
             if (queue.Count >= ThreadCount)
             {
-                File.AppendAllText($"log_{logName}_{ThreadCount}x{ThreadRunCount}.txt", sb.ToString());
+                SaveLog();
             }
+        }
+        private static void SaveLog()
+        {
+            File.AppendAllText($"log_{logName}_{ThreadCount}x{ThreadRunCount}.txt", sb.ToString());
         }
 
 
